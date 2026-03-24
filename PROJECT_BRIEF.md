@@ -183,12 +183,10 @@ Clients have read-only access to Firestore. All user-initiated writes go through
 - Invitation list management views use direct Firestore reads for list members.
 - Invite-link landing page uses `GET /api/invitations/[token]` for safe public preview.
 
-**Firebase Cloud Function Triggers (automatic, no client call needed):**
-- `Auth onCreate` — Fires on first sign-in (Google/Apple); creates `users/{userId}` document from Firebase Auth profile (`displayName`, `email`, `avatarUrl` from `photoURL`), sets `status: active`, and creates the default personal list via Firebase Admin SDK.
-
 **API Routes (writes via Firebase Admin SDK, plus safe invitation token read):**
 | Method | Route | Description |
 |--------|-------|-----------|
+| `POST` | `pages/api/users/bootstrap/` | Idempotent first-run bootstrap after sign-in: create `users/{userId}` if missing, create default personal list if missing, ensure membership and `listRefs` cache |
 | `PATCH` | `pages/api/users/[userId]/` | Update display name or avatar |
 | `POST` | `pages/api/lists/` | Create a list |
 | `PATCH` | `pages/api/lists/[listId]/` | Update list name, timezone |
