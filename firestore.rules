@@ -2,6 +2,40 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isListMember(listId) {
+      return signedIn() &&
+        exists(/databases/$(database)/documents/lists/$(listId)/members/$(request.auth.uid));
+    }
+
+    // User documents: readable only by the user themselves
+    match /users/{userId} {
+      allow read: if signedIn() && request.auth.uid == userId;
+      allow write: if false;
+    }
+
+    // Lists: readable only by members
+    match /lists/{listId} {
+      allow read: if isListMember(listId);
+      allow write: if false;
+
+      // All list subcollections: same membership-based read restrictions
+      match /{document=**} {
+        allow read: if isListMember(listId);
+        allow write: if false;
+      }
+    }
+
+    // Invitations: readable only by members of the invited list
+    match /invitations/{token} {
+      allow read: if signedIn() && isListMember(resource.data.listId);
+      allow write: if false;
+    }
+
+    // Deny everything else by default
     match /{document=**} {
       allow read, write: if false;
     }
