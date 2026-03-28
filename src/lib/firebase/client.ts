@@ -5,7 +5,7 @@
  */
 
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { getAuth, connectAuthEmulator } from 'firebase/auth';
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 
 const firebaseConfig = {
@@ -23,12 +23,11 @@ export const firestore = getFirestore(app);
 
 // Connect to emulator in development
 if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-  if (process.env.NEXT_PUBLIC_FIRESTORE_EMULATOR_HOST) {
-    try {
-      connectFirestoreEmulator(firestore, '127.0.0.1', 8080);
-    } catch (e) {
-      // Already connected or error connecting
-    }
+  try {
+    connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+    connectFirestoreEmulator(firestore, '127.0.0.1', 8080);
+  } catch {
+    // Already connected or error connecting
   }
 }
 

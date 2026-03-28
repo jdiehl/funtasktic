@@ -15,6 +15,12 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if signedIn() && request.auth.uid == userId;
       allow write: if false;
+
+      // User listRefs cache: readable only by the owning user.
+      match /listRefs/{listId} {
+        allow read: if signedIn() && request.auth.uid == userId;
+        allow write: if false;
+      }
     }
 
     // Lists: readable only by members

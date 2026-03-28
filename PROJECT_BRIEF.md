@@ -21,7 +21,7 @@ Help people consistently complete recurring chores by making progress visible, p
 ## 5. Scope
 ### In Scope (MVP this week)
 - Web app only.
-- Google and Apple authentication.
+- Firebase authentication (email/password in current MVP).
 - List-based collaboration and access control.
 - Recurring task engine with two recurrence modes.
 - Completion events and point tracking.
@@ -205,15 +205,12 @@ Clients have read-only access to Firestore. All user-initiated writes go through
 | `DELETE` | `pages/api/auth/session` | Destroy session cookie (sign-out) |
 
 ### 8.4 Frontend Structure (Next.js + React)
-- `pages/auth/` — Sign-in, sign-up, auth flows.
-- `pages/lists/` — List browser, create list flow.
-- `pages/lists/[listId]/` — List detail, task management, completions.
-- `pages/lists/[listId]/leaderboard` — List leaderboard view.
-- `pages/invite/[token]/` — Invite landing page; calls token preview API then accepts invite after sign-in.
-- `components/` — Shared UI components (task cards, forms, leaderboards).
-- `hooks/` — Firebase auth context, Firestore subscription hooks (useList, useTasks, useLeaderboard).
+- `app/page.tsx` — Home entry, mounts MVP app shell.
+- `components/MvpApp.tsx` — Main authenticated experience (lists, tasks, completions, leaderboard, invites).
+- `components/` — Reusable UI components (`TaskCard`, `TaskForm`, `ListSelector`, `LeaderboardView`, `InvitationInput`, `UserAvatar`, `AuthProvider`).
+- `hooks/` — Firebase auth context and list subscription hooks (`useAuth`, `useList`).
 - `lib/recurrence/` — Recurrence calculation logic (also used server-side in API routes).
-- `lib/firestore/` — Firestore client utilities, typed collection helpers.
+- `lib/api/client.ts` — Client-side authenticated API request helper.
 
 ### 8.5 Security and Access
 - Firebase Security Rules restrict all client access to **read-only**. No client writes are permitted directly to Firestore.
@@ -250,50 +247,27 @@ Clients have read-only access to Firestore. All user-initiated writes go through
 - Observability baseline: error logging, structured API logs.
 
 ## 11. Testing Strategy (MVP)
-- Unit tests for recurrence calculations (`lib/recurrence/__tests__/`).
+- Unit tests for recurrence calculations (`src/lib/recurrence/recurrence.test.ts`).
 - Firestore Security Rules tests (Firebase emulator): verify read-only client access and membership-based read restrictions.
-- API route tests for all write endpoints (Jest + mock Firebase Admin SDK): authorization checks, input validation, business logic correctness.
+- API route tests for all write endpoints (Vitest + mock Firebase Admin SDK): authorization checks, input validation, business logic correctness.
 - Invitation lifecycle tests: create, safe preview-by-token response shape, revoke, accept, single-use enforcement, and expiry handling.
-- Frontend component tests (Jest + React Testing Library) for task forms, leaderboard.
+- Frontend component tests (Vitest + Testing Library) for task forms and leaderboard views.
 - End-to-end smoke test: auth → list creation → task creation → completion → leaderboard update.
 
-## 12. Agent Action Sequence Plan (MVP)
-### 12.1 Sequential Foundation (run in order)
-1. Run **Funtasktic Product Brief Agent** to confirm final MVP boundaries, acceptance criteria, and out-of-scope guardrails.
-2. Run **Funtasktic Solution Architect** to finalize Next.js + Firebase architecture decisions, route contracts, and data model constraints.
-3. Run **Funtasktic Release Execution Agent** to produce the implementation sequence, dependency map, and go/no-go checkpoints.
-
-### 12.2 Bootstrap Build Sequence (run in order)
-1. Run **Funtasktic Backend API Agent** to initialize backend foundations: auth/session routes, API route scaffolding, authorization middleware, Firebase Admin integration.
-2. Run **Funtasktic Frontend React Agent** to implement app shell and core reads/writes against the approved API contracts.
-
-### 12.3 Parallel Feature Execution (after foundation)
-1. **Funtasktic Backend API Agent** and **Funtasktic Frontend React Agent** run in parallel per vertical slice:
-  - Slice A: list creation and membership visibility.
-  - Slice B: task CRUD and recurrence behavior.
-  - Slice C: completions and leaderboard updates.
-  - Slice D: invitation create/revoke/preview/accept flow.
-2. **Funtasktic QA Testing Agent** runs in parallel with each slice to add and validate unit/integration coverage before merge.
-
-### 12.4 Sequential Hardening and Release
-1. Run **Funtasktic QA Testing Agent** for final regression sweep (authz, recurrence, leaderboard correctness, invitation lifecycle).
-2. Run **Funtasktic Release Execution Agent** to verify release readiness checklist and scope-cut decisions.
-3. Run **Funtasktic Product Brief Agent** only if scope decisions changed and the brief must be updated.
-
-## 13. Definition of Done (MVP)
+## 12. Definition of Done (MVP)
 - All five core user activities work end-to-end in production web app.
 - Access control rules are enforced and tested.
 - Recurrence behaves correctly in both supported modes.
 - Leaderboard updates correctly from completion data.
 - Architecture and module boundaries support post-MVP mobile clients.
 
-## 14. Risks and Mitigations
+## 13. Risks and Mitigations
 - Recurrence complexity risk: isolate and heavily unit-test recurrence engine.
 - Fairness disputes risk: keep completion audit trail immutable.
 - Scope risk (one-week MVP): lock out-of-scope items and avoid notification/social/calendar expansion.
 - Timezone confusion risk: centralize conversion utilities and test edge cases around day boundaries.
 
-## 15. Open Decisions for Next Iteration
+## 14. Open Decisions for Next Iteration
 - Add push notifications
 - Add mobile apps (iOS and Android)
 - Investigate and add additional capabilities
