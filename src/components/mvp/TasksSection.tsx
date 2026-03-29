@@ -3,6 +3,7 @@
 import { useMvpAuth } from '@/hooks/useMvpAuth';
 import { useMvpListManagement } from '@/hooks/useMvpListManagement';
 import { useMvpActiveListData } from '@/hooks/useMvpActiveListData';
+import { Card, Heading, Paragraph } from '@/components/ui';
 import { TaskForm } from '@/components/TaskForm';
 import { TaskCard } from '@/components/TaskCard';
 import { asDate } from '@/components/mvp/date';
@@ -21,12 +22,12 @@ export function TasksSection() {
     <section className="grid gap-4">
       <TaskForm onSubmit={handleCreateTask} disabled={busy || !activeListId} />
 
-      <section className="rounded-2xl border border-[var(--color-border)] bg-white p-4">
-        <h2 className="mb-3 text-base font-semibold text-[var(--color-text)]">Open tasks</h2>
+      <Card shadow={false}>
+        <Heading level={4}>Open tasks</Heading>
         {tasks.length === 0 ? (
-          <p className="text-sm text-[var(--color-muted-text)]">No active chores in this list yet.</p>
+          <Paragraph small muted className="mt-3">No active chores in this list yet.</Paragraph>
         ) : (
-          <div className="grid gap-3">
+          <div className="grid gap-3 mt-3">
             {tasks.map((task) => {
               const dueDate = asDate(task.nextDueAt);
               const dueLabel = dueDate
@@ -55,7 +56,7 @@ export function TasksSection() {
             })}
           </div>
         )}
-      </section>
+      </Card>
     </section>
   );
 }

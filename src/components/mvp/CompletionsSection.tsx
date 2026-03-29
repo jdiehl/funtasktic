@@ -3,6 +3,7 @@
 import { useMvpAuth } from '@/hooks/useMvpAuth';
 import { useMvpListManagement } from '@/hooks/useMvpListManagement';
 import { useMvpActiveListData } from '@/hooks/useMvpActiveListData';
+import { Card, Button, Heading, Paragraph } from '@/components/ui';
 import { asDate } from '@/components/mvp/date';
 
 export function CompletionsSection() {
@@ -10,12 +11,12 @@ export function CompletionsSection() {
   const { activeListId } = useMvpListManagement(user);
   const { completions, busy, handleRevertCompletion } = useMvpActiveListData(user, activeListId);
   return (
-    <section className="rounded-2xl border border-[var(--color-border)] bg-white p-4">
-      <h2 className="mb-3 text-base font-semibold text-[var(--color-text)]">Recent completions</h2>
+    <Card shadow={false}>
+      <Heading level={4}>Recent completions</Heading>
       {completions.length === 0 ? (
-        <p className="text-sm text-[var(--color-muted-text)]">No completions yet.</p>
+        <Paragraph small muted className="mt-3">No completions yet.</Paragraph>
       ) : (
-        <ul className="space-y-2">
+        <ul className="space-y-2 mt-3">
           {completions.map((completion) => {
             const completedAtDate = asDate(completion.completedAt);
             return (
@@ -30,19 +31,19 @@ export function CompletionsSection() {
                     {completion.pointsAwarded} pts
                   </p>
                 </div>
-                <button
-                  type="button"
-                  className="rounded-lg border border-[var(--color-border)] px-2 py-1 text-xs font-medium text-[var(--color-muted-text)] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                <Button
+                  variant="tertiary"
+                  size="sm"
                   onClick={() => handleRevertCompletion(completion.id)}
                   disabled={busy || completion.completedByUserId !== user?.uid}
                 >
                   Revert
-                </button>
+                </Button>
               </li>
             );
           })}
         </ul>
       )}
-    </section>
+    </Card>
   );
 }
