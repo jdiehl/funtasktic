@@ -14,21 +14,16 @@ export async function ensureUserBootstrap(userId: string): Promise<void> {
 
     let displayName = 'User';
     let avatarUrl: string | null = null;
+    let shouldCreateUser = false;
+    let userEmail = '';
 
     if (!userDoc.exists) {
       const authUser = await adminAuth.getUser(userId);
 
       displayName = authUser.displayName || authUser.email?.split('@')[0] || 'User';
       avatarUrl = authUser.photoURL ?? null;
-
-      tx.set(userRef, {
-        displayName,
-        avatarUrl,
-        email: authUser.email ?? '',
-        createdAt: FieldValue.serverTimestamp(),
-        lastSeenAt: FieldValue.serverTimestamp(),
-        status: 'active',
-      });
+      userEmail = authUser.email ?? '';
+      shouldCreateUser = true;
     } else {
       const userData = userDoc.data() as { displayName?: string; avatarUrl?: string | null };
       displayName = userData.displayName ?? 'User';
@@ -61,6 +56,36 @@ export async function ensureUserBootstrap(userId: string): Promise<void> {
 
     if (!personalListId) {
       personalListId = randomBytes(16).toString('hex');
+    }
+
+    const hasExistingPersonalList = ownedListsSnap.docs.some((doc) => doc.id === personalListId);
+
+    const memberRef = adminDb
+      .collection('lists')
+      .doc(personalListId)
+      .collection('members')
+      .doc(userId);
+    const memberDoc = hasExistingPersonalList ? await tx.get(memberRef) : null;
+
+    const listRefCacheRef = adminDb
+      .collection('users')
+      .doc(userId)
+      .collection('listRefs')
+      .doc(personalListId);
+    const listRefDoc = hasExistingPersonalList ? await tx.get(listRefCacheRef) : null;
+
+    if (shouldCreateUser) {
+      tx.set(userRef, {
+        displayName,
+        avatarUrl,
+        email: userEmail,
+        createdAt: FieldValue.serverTimestamp(),
+        lastSeenAt: FieldValue.serverTimestamp(),
+        status: 'active',
+      });
+    }
+
+    if (!hasExistingPersonalList) {
       tx.set(adminDb.collection('lists').doc(personalListId), {
         name: personalListName,
         timezone: personalListTimezone,
@@ -71,14 +96,7 @@ export async function ensureUserBootstrap(userId: string): Promise<void> {
       });
     }
 
-    const memberRef = adminDb
-      .collection('lists')
-      .doc(personalListId)
-      .collection('members')
-      .doc(userId);
-    const memberDoc = await tx.get(memberRef);
-
-    if (!memberDoc.exists) {
+    if (!memberDoc?.exists) {
       tx.set(memberRef, {
         role: 'admin',
         joinedAt: FieldValue.serverTimestamp(),
@@ -87,14 +105,7 @@ export async function ensureUserBootstrap(userId: string): Promise<void> {
       });
     }
 
-    const listRefCacheRef = adminDb
-      .collection('users')
-      .doc(userId)
-      .collection('listRefs')
-      .doc(personalListId);
-    const listRefDoc = await tx.get(listRefCacheRef);
-
-    if (!listRefDoc.exists) {
+    if (!listRefDoc?.exists) {
       tx.set(listRefCacheRef, {
         listId: personalListId,
         name: personalListName,

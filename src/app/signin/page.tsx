@@ -1,12 +1,17 @@
 'use client';
 
+import { useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useMvpAuth } from '@/hooks/useMvpAuth';
 import { useMvpInvitePreview } from '@/hooks/useMvpInvitePreview';
 import { Button, Input, Heading, Paragraph, Alert } from '@/components/ui';
 
 export default function SignInPage() {
+  const router = useRouter();
   const {
+    user,
+    loading,
     displayName,
     email,
     password,
@@ -20,6 +25,16 @@ export default function SignInPage() {
   } = useMvpAuth();
 
   const { invitePreview } = useMvpInvitePreview();
+
+  useEffect(() => {
+    if (!loading && user) {
+      router.replace('/home');
+    }
+  }, [loading, router, user]);
+
+  if (loading || user) {
+    return null;
+  }
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4 py-10">

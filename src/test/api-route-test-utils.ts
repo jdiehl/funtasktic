@@ -1,5 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
+interface CreateRouteRequestOptions {
+  method: string;
+  url?: string;
+  body?: unknown;
+  headers?: Record<string, string>;
+}
+
 export interface MockApiResponse<T = any> {
   statusCode: number;
   jsonBody: T | null;
@@ -40,4 +47,30 @@ export function createMockRes<T = any>(): NextApiResponse<T> & MockApiResponse<T
   };
 
   return res as NextApiResponse<T> & MockApiResponse<T>;
+}
+
+export function createRouteRequest(options: CreateRouteRequestOptions): Request {
+  const headers = new Headers(options.headers ?? {});
+  let body: string | undefined;
+
+  if (options.body !== undefined) {
+    body = JSON.stringify(options.body);
+    if (!headers.has('content-type')) {
+      headers.set('content-type', 'application/json');
+    }
+  }
+
+  return new Request(options.url ?? 'http://localhost/api/test', {
+    method: options.method,
+    headers,
+    body,
+  });
+}
+
+export async function readJson<T = any>(response: Response): Promise<T> {
+  return (await response.json()) as T;
+}
+
+export function createRouteContext(params: Record<string, string>) {
+  return { params: Promise.resolve(params) };
 }
