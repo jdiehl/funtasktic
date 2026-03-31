@@ -1,6 +1,6 @@
 /**
  * POST /api/auth/session
- * Create or destroy Firebase session cookie
+ * Create Firebase session cookie
  */
 
 import { adminAuth } from '@/lib/firebase/admin';
@@ -8,7 +8,6 @@ import { ensureUserBootstrap } from '@/lib/users/bootstrap';
 
 interface SessionRequest {
   idToken?: string;
-  deleteSession?: boolean;
 }
 
 const WEEK_IN_SECONDS = 7 * 24 * 60 * 60;
@@ -17,19 +16,6 @@ export async function POST(request: Request) {
   try {
     const body = (await request.json().catch(() => null)) as SessionRequest | null;
     const idToken = body?.idToken;
-    const deleteSession = body?.deleteSession;
-
-    if (deleteSession) {
-      return Response.json(
-        { success: true },
-        {
-          status: 200,
-          headers: {
-            'Set-Cookie': 'sessionCookie=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 UTC;',
-          },
-        }
-      );
-    }
 
     if (!idToken) {
       return Response.json({ error: 'idToken required' }, { status: 400 });

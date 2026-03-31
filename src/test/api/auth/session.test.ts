@@ -48,15 +48,6 @@ describe('POST/DELETE /api/auth/session', () => {
     expect(await readJson(res)).toEqual({ success: true });
   });
 
-  it('clears session cookie on POST deleteSession', async () => {
-    const req = createRouteRequest({ method: 'POST', body: { deleteSession: true } });
-    const res = await POST(req);
-
-    expect(res.headers.get('Set-Cookie')).toContain('sessionCookie=;');
-    expect(res.status).toBe(200);
-    expect(await readJson(res)).toEqual({ success: true });
-  });
-
   it('returns 401 when session creation fails', async () => {
     mocks.verifyIdToken.mockRejectedValue(new Error('bad token'));
 
