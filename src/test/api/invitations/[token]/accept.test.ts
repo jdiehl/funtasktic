@@ -68,6 +68,7 @@ describe('POST /api/invitations/[token]/accept', () => {
   it('accepts invitation successfully', async () => {
     mocks.getUserIdFromRequest.mockResolvedValue('u1');
 
+    let capturedTx: any;
     mocks.runTransaction.mockImplementation(async (cb: any) => {
       const tx = {
         get: vi.fn(async (ref: any) => {
@@ -96,6 +97,7 @@ describe('POST /api/invitations/[token]/accept', () => {
         set: vi.fn(),
         update: vi.fn(),
       };
+      capturedTx = tx;
       await cb(tx);
     });
 
@@ -105,6 +107,16 @@ describe('POST /api/invitations/[token]/accept', () => {
     expect(mocks.runTransaction).toHaveBeenCalledTimes(1);
     expect(res.status).toBe(200);
     expect(await readJson(res)).toEqual({ success: true, listId: 'l1' });
+
+    const memberSetCall = capturedTx.set.mock.calls.find((args: any[]) => args[0].kind === 'memberRef');
+    expect(memberSetCall).toBeDefined();
+    expect(memberSetCall[0].id).toBe('u1');
+    expect(memberSetCall[1]).toEqual({
+      role: 'admin',
+      joinedAt: '__SERVER_TS__',
+      displayName: 'Alice',
+      avatarUrl: null,
+    });
   });
 
   it('maps INVITE_EXPIRED to 400', async () => {
